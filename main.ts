@@ -9,9 +9,8 @@ namespace ms_tmai {
     serial.redirectToUSB()
 
     // Get top Classification
-    export function setTopClassification() : void
-    {
-        let max:number = ClassPrediction.reduce((acc, val) => { acc > val ? acc : val }, null);
+    export function setTopClassification(): void {
+        let max: number = ClassPrediction.reduce((acc, val) => { acc > val ? acc : val }, null);
         topClassIndex = ClassPrediction.indexOf(max);
         topClassName = ClassName[topClassIndex];
         topClassPrediction = max;
@@ -22,27 +21,29 @@ namespace ms_tmai {
     const ClassificationEventId = 53731;
     let onClassificationChangedHandler: (className: string) => void;
 
+
     //% weight=60
     //% block="Classification Changed"
+    //% draggableParameters = reporter
+
     //% color=#00B1ED
-    export function onClassificationChanged(minThreshold: number, handler: (className: string) => void) {
+    export function onClassificationChanged(handler: (PredictionName: string) => void) {
         onClassificationChangedHandler = handler;
         let lasttopClassIndex = -1;
 
         control.inBackground(() => {
             while (true) {
                 if (topClassIndex != lasttopClassIndex) {
-                    if (topClassPrediction >= minThreshold )
-                    {
+                    if (topClassPrediction >= 60) {
                         onClassificationChangedHandler(topClassName);
                         lasttopClassIndex = topClassIndex;
                     }
-                    else{
+                    else {
                         onClassificationChangedHandler("");
                         lasttopClassIndex = -1;
                     }
                 }
-                
+
                 basic.pause(200);
             }
         })

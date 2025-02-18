@@ -23,7 +23,6 @@ namespace ms_tmai {
         resetParameter;
     }
 
-
     let onClassificationChangedHandler: (PredictionName: string, Score: number) => void;
 
     //% weight=60
@@ -48,6 +47,7 @@ namespace ms_tmai {
         return topClassPrediction;
     }
 
+
     serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
         if (!runClassification) return;
         let SerialData = serial.readUntil(serial.delimiters(Delimiters.NewLine))
@@ -62,14 +62,46 @@ namespace ms_tmai {
         } else {
             ClassPrediction[index] = parseFloat(tempClassPrediction)
         }
+    })
 
-        setTopClassification();
+    control.inBackground(() => {
+        let lastIndex = -1;
+        let lastTopScore = 0;
+
+        while (true) {
+            if (runClassification)
+            {
+                let hasChanged = false;
+                setTopClassification();
+
+                if (onClassificationChangedHandler != null)
+                {
+                    if (topClassPrediction < minCertainty && lastTopScore >= minCertainty) {
+                        lastIndex = -1;
+                        onClassificationChangedHandler("", -1);
+                    }
+                    else if (topClassPrediction >= minCertainty && lastTopScore < minCertainty) {
+                        lastIndex = topClassIndex;
+                        onClassificationChangedHandler(topClassName, topClassPrediction);
+                    }
+                    else if (lastIndex != topClassIndex && topClassPrediction >= minCertainty) {
+                        lastIndex = topClassIndex;
+                        onClassificationChangedHandler(topClassName, topClassPrediction);
+                    }
+
+                    lastTopScore = topClassPrediction;
+                }
+            }
+
+            basic.pause(300);
+        }
     })
 
     // Get top Classification
-    export function setTopClassification(): void {
+    function setTopClassification(): void {
         let max:number = -1;
         let newIndex:number = -1;
+
         for (let i = 0; i < ClassPrediction.length; i++)
         {
             let value:number = ClassPrediction[i];
@@ -80,27 +112,10 @@ namespace ms_tmai {
             }
         }
 
-        let hasChanged = false;
-
-        if ((topClassPrediction < minCertainty && max >= minCertainty) || (topClassPrediction >= minCertainty && max < minCertainty)) {
-            hasChanged = true;
-        }
-
         topClassPrediction = max;
-
         if (newIndex != topClassIndex) {
             topClassIndex = newIndex;
             topClassName = ClassName[newIndex];
-            hasChanged = true;
-        }
-
-        if (hasChanged && onClassificationChangedHandler != null) {
-            if (max < minCertainty) {
-                onClassificationChangedHandler("None", -1);
-            }
-            else {
-                onClassificationChangedHandler(topClassName, topClassPrediction);
-            }
         }
     }
 

@@ -61,6 +61,7 @@ namespace ms_tmai {
         serialReadInProgress = true;
 
         let rxData = serial.readUntil(serial.delimiters(Delimiters.NewLine))
+        rxData = rxData.slice(0,-1);
         let messageParts = rxData.split(";")
 
         for (let classificationString of messageParts)
@@ -78,6 +79,7 @@ namespace ms_tmai {
             {
                 let index = ClassName.indexOf(tempClassName)
                 if (index == -1) {
+                    serialReadInProgress = false;
                     return;
                 } else {
                     ClassPrediction[index] = parseFloat(tempClassPrediction)

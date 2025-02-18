@@ -73,7 +73,6 @@ namespace ms_tmai {
             {
                 ClassName.push(tempClassName)
                 ClassPrediction.push(parseFloat(tempClassPrediction))
-                firstUpdate = false;
             }
             else
             {
@@ -85,7 +84,8 @@ namespace ms_tmai {
                 }
             }
         }
-
+        
+        firstUpdate = false;
         serialReadInProgress = false;
     })
 

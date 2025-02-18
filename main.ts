@@ -5,22 +5,27 @@ namespace ms_tmai {
     let topClassName = "";
     let topClassIndex = -1;
     let topClassPrediction = -1;
+    let minCertainty = 0;
+    let runClassification:boolean = false;
 
-    serial.redirectToUSB()
+    //% weight=60
+    //% block="Start Classification with Min Certainty %certainty"
+    export function startClassification(certainty:number) : void {
+        minCertainty = certainty;
+        serial.redirectToUSB()
+        runClassification = true;
+    }
 
-    // Get top Classification
-    export function setTopClassification(): void {
-        let max: number = ClassPrediction.reduce((acc, val) => { acc > val ? acc : val }, null);
-        topClassIndex = ClassPrediction.indexOf(max);
-        topClassName = ClassName[topClassIndex];
-        topClassPrediction = max;
+    //% weight=55
+    //% block="Stop Classification"
+    export function stopClassification(): void {
+        runClassification = false;
+        resetParameter;
     }
 
     // Get current Classification
-
     const ClassificationEventId = 53731;
     let onClassificationChangedHandler: (className: string) => void;
-
 
     //% weight=60
     //% block="Classification Changed"
@@ -28,6 +33,7 @@ namespace ms_tmai {
 
     //% color=#00B1ED
     export function onClassificationChanged(handler: (PredictionName: string) => void) {
+        if (!runClassification) return;
         onClassificationChangedHandler = handler;
         let lasttopClassIndex = -1;
 
@@ -50,6 +56,7 @@ namespace ms_tmai {
     }
 
     serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
+        if (!runClassification) return;
         let SerialData = serial.readUntil(serial.delimiters(Delimiters.NewLine))
         let serialParts = SerialData.split(":")
         let tempClassName = serialParts[0]
@@ -65,4 +72,34 @@ namespace ms_tmai {
 
         setTopClassification();
     })
+
+    // Get top Classification
+    export function setTopClassification(): void {
+        let max: number = ClassPrediction.reduce((acc, val) => { acc > val ? acc : val }, null);
+
+        if (max >= minCertainty)
+        {
+            topClassPrediction = max;
+            let newIndex = ClassPrediction.indexOf(max);
+
+            if (newIndex != topClassIndex)
+            {
+                topClassIndex = ClassPrediction.indexOf(max);
+                topClassName = ClassName[topClassIndex];
+                onClassificationChangedHandler(topClassName);
+            }        
+        }
+        else{
+
+        }
+    }
+
+    function resetParameter(): void {
+        ClassName = [];
+        ClassPrediction = [];
+        topClassName = "";
+        topClassIndex = -1;
+        topClassPrediction = -1;
+        minCertainty = 0;
+    }
 }

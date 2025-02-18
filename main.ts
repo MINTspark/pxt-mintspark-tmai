@@ -11,7 +11,7 @@ namespace ms_tmai {
     //% weight=60
     //% block="Start Classification with Min Certainty %certainty"
     export function startClassification(certainty:number) : void {
-        minCertainty = certainty;
+        minCertainty = certainty / 100;
         serial.redirectToUSB()
         runClassification = true;
     }
@@ -23,8 +23,7 @@ namespace ms_tmai {
         resetParameter;
     }
 
-    // Get current Classification
-    const ClassificationEventId = 53731;
+
     let onClassificationChangedHandler: (PredictionName: string, Score: number) => void;
 
     //% weight=60
@@ -32,16 +31,21 @@ namespace ms_tmai {
     //% draggableParameters = reporter
     //% color=#00B1ED
     export function onClassificationChanged(handler: (PredictionName: string, Score: number) => void) {
-        if (!runClassification) return;
         onClassificationChangedHandler = handler;
     }
 
     //% weight=70
     //% block="ClassifiedName"
-    //% draggableParameters = reporter
     //% color=#00B1ED
     export function getTopPredictioName():string {
         return topClassName;
+    }
+
+    //% weight=68
+    //% block="ClassifiedScore"
+    //% color=#00B1ED
+    export function getTopPredictioScore(): number {
+        return topClassPrediction;
     }
 
     serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
@@ -78,27 +82,23 @@ namespace ms_tmai {
 
         let hasChanged = false;
 
-        if ((topClassPrediction < minCertainty && max >= minCertainty) || (topClassPrediction >= minCertainty && max < minCertainty))
-        {
+        if ((topClassPrediction < minCertainty && max >= minCertainty) || (topClassPrediction >= minCertainty && max < minCertainty)) {
             hasChanged = true;
         }
 
         topClassPrediction = max;
 
-        if (newIndex != topClassIndex)
-        {
+        if (newIndex != topClassIndex) {
             topClassIndex = newIndex;
-            topClassName = ClassName[topClassIndex];    
-            hasChanged = true;     
+            topClassName = ClassName[newIndex];
+            hasChanged = true;
         }
 
-        if (hasChanged && onClassificationChangedHandler != null)
-        {
-            if (max < minCertainty)
-            {
-                onClassificationChangedHandler("None",-1);
+        if (hasChanged && onClassificationChangedHandler != null) {
+            if (max < minCertainty) {
+                onClassificationChangedHandler("None", -1);
             }
-            else{
+            else {
                 onClassificationChangedHandler(topClassName, topClassPrediction);
             }
         }

@@ -48,20 +48,36 @@ namespace ms_tmai {
     }
 
 
-    serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
-        if (!runClassification) return;
-        let SerialData = serial.readUntil(serial.delimiters(Delimiters.NewLine))
-        let serialParts = SerialData.split(":")
-        let tempClassName = serialParts[0]
-        let tempClassPrediction = serialParts[1]
-        let index = ClassName.indexOf(tempClassName)
+    let serialReadInProgress = false;
 
-        if (index == -1) {
-            ClassName.push(tempClassName)
-            ClassPrediction.push(parseFloat(tempClassPrediction))
-        } else {
-            ClassPrediction[index] = parseFloat(tempClassPrediction)
+    serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
+        if (serialReadInProgress || !runClassification)
+        {
+            serial.readString();
+            return;
         }
+
+        serialReadInProgress = true;
+
+        let rxData = serial.readUntil(serial.delimiters(Delimiters.NewLine))
+        let messageParts = rxData.split(";")
+
+        for (let classificationString of messageParts)
+        {
+            let classificationParts = classificationString.split(":");
+            let tempClassName = classificationParts[0]
+            let tempClassPrediction = classificationParts[1]
+            let index = ClassName.indexOf(tempClassName)
+
+            if (index == -1) {
+                ClassName.push(tempClassName)
+                ClassPrediction.push(parseFloat(tempClassPrediction))
+            } else {
+                ClassPrediction[index] = parseFloat(tempClassPrediction)
+            }
+        }
+
+        serialReadInProgress = false;
     })
 
     control.inBackground(() => {

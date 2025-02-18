@@ -49,6 +49,7 @@ namespace ms_tmai {
 
 
     let serialReadInProgress = false;
+    let firstUpdate = true;
 
     serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
         if (serialReadInProgress || !runClassification)
@@ -67,13 +68,21 @@ namespace ms_tmai {
             let classificationParts = classificationString.split(":");
             let tempClassName = classificationParts[0]
             let tempClassPrediction = classificationParts[1]
-            let index = ClassName.indexOf(tempClassName)
 
-            if (index == -1) {
+            if (firstUpdate)
+            {
                 ClassName.push(tempClassName)
                 ClassPrediction.push(parseFloat(tempClassPrediction))
-            } else {
-                ClassPrediction[index] = parseFloat(tempClassPrediction)
+                firstUpdate = false;
+            }
+            else
+            {
+                let index = ClassName.indexOf(tempClassName)
+                if (index == -1) {
+                    return;
+                } else {
+                    ClassPrediction[index] = parseFloat(tempClassPrediction)
+                }
             }
         }
 

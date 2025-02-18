@@ -25,7 +25,7 @@ namespace ms_tmai {
 
     // Get current Classification
     const ClassificationEventId = 53731;
-    let onClassificationChangedHandler: (className: string, score: number) => void;
+    let onClassificationChangedHandler: (PredictionName: string, Score: number) => void;
 
     //% weight=60
     //% block="Classification Changed"
@@ -76,14 +76,13 @@ namespace ms_tmai {
             }
         }
 
-        basic.showNumber(newIndex);
         let hasChanged = false;
 
         if ((topClassPrediction < minCertainty && max >= minCertainty) || (topClassPrediction >= minCertainty && max < minCertainty))
         {
             hasChanged = true;
         }
-        basic.showNumber(1);
+
         topClassPrediction = max;
 
         if (newIndex != topClassIndex)
@@ -92,21 +91,17 @@ namespace ms_tmai {
             topClassName = ClassName[topClassIndex];    
             hasChanged = true;     
         }
-basic.showNumber(2);
-        if (hasChanged)
+
+        if (hasChanged && onClassificationChangedHandler != null)
         {
             if (max < minCertainty)
             {
-                basic.showNumber(3);
-                basic.showNumber(max);
                 onClassificationChangedHandler("None",-1);
             }
             else{
-                basic.showNumber(4);
                 onClassificationChangedHandler(topClassName, topClassPrediction);
             }
         }
-        basic.showNumber(5);
     }
 
     function resetParameter(): void {

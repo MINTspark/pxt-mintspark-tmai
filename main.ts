@@ -30,11 +30,18 @@ namespace ms_tmai {
     //% weight=60
     //% block="Classification Changed"
     //% draggableParameters = reporter
-
     //% color=#00B1ED
     export function onClassificationChanged(handler: (PredictionName: string, Score: number) => void) {
         if (!runClassification) return;
         onClassificationChangedHandler = handler;
+    }
+
+    //% weight=70
+    //% block="ClassifiedName"
+    //% draggableParameters = reporter
+    //% color=#00B1ED
+    export function getTopPredictioName():string {
+        return topClassName;
     }
 
     serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
@@ -57,34 +64,49 @@ namespace ms_tmai {
 
     // Get top Classification
     export function setTopClassification(): void {
-        let max: number = ClassPrediction.reduce((acc, val) => { acc > val ? acc : val }, null);
-        let newIndex = ClassPrediction.indexOf(max);
+        let max:number = -1;
+        let newIndex:number = -1;
+        for (let i = 0; i < ClassPrediction.length; i++)
+        {
+            let value:number = ClassPrediction[i];
+            if (value > max)
+            {
+                newIndex = i;
+                max = value;
+            }
+        }
+
+        basic.showNumber(newIndex);
         let hasChanged = false;
 
         if ((topClassPrediction < minCertainty && max >= minCertainty) || (topClassPrediction >= minCertainty && max < minCertainty))
         {
             hasChanged = true;
         }
- 
+        basic.showNumber(1);
         topClassPrediction = max;
 
         if (newIndex != topClassIndex)
         {
-            topClassIndex = ClassPrediction.indexOf(max);
+            topClassIndex = newIndex;
             topClassName = ClassName[topClassIndex];    
-            hasChanged = true;
+            hasChanged = true;     
         }
-
+basic.showNumber(2);
         if (hasChanged)
         {
             if (max < minCertainty)
             {
-                onClassificationChangedHandler("",-1);
+                basic.showNumber(3);
+                basic.showNumber(max);
+                onClassificationChangedHandler("None",-1);
             }
             else{
+                basic.showNumber(4);
                 onClassificationChangedHandler(topClassName, topClassPrediction);
             }
         }
+        basic.showNumber(5);
     }
 
     function resetParameter(): void {

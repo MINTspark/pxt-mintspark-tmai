@@ -25,34 +25,16 @@ namespace ms_tmai {
 
     // Get current Classification
     const ClassificationEventId = 53731;
-    let onClassificationChangedHandler: (className: string) => void;
+    let onClassificationChangedHandler: (className: string, score: number) => void;
 
     //% weight=60
     //% block="Classification Changed"
     //% draggableParameters = reporter
 
     //% color=#00B1ED
-    export function onClassificationChanged(handler: (PredictionName: string) => void) {
+    export function onClassificationChanged(handler: (PredictionName: string, Score: number) => void) {
         if (!runClassification) return;
         onClassificationChangedHandler = handler;
-        let lasttopClassIndex = -1;
-
-        control.inBackground(() => {
-            while (true) {
-                if (topClassIndex != lasttopClassIndex) {
-                    if (topClassPrediction >= 60) {
-                        onClassificationChangedHandler(topClassName);
-                        lasttopClassIndex = topClassIndex;
-                    }
-                    else {
-                        onClassificationChangedHandler("");
-                        lasttopClassIndex = -1;
-                    }
-                }
-
-                basic.pause(200);
-            }
-        })
     }
 
     serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
@@ -76,21 +58,32 @@ namespace ms_tmai {
     // Get top Classification
     export function setTopClassification(): void {
         let max: number = ClassPrediction.reduce((acc, val) => { acc > val ? acc : val }, null);
+        let newIndex = ClassPrediction.indexOf(max);
+        let hasChanged = false;
 
-        if (max >= minCertainty)
+        if ((topClassPrediction < minCertainty && max >= minCertainty) || (topClassPrediction >= minCertainty && max < minCertainty))
         {
-            topClassPrediction = max;
-            let newIndex = ClassPrediction.indexOf(max);
-
-            if (newIndex != topClassIndex)
-            {
-                topClassIndex = ClassPrediction.indexOf(max);
-                topClassName = ClassName[topClassIndex];
-                onClassificationChangedHandler(topClassName);
-            }        
+            hasChanged = true;
         }
-        else{
+ 
+        topClassPrediction = max;
 
+        if (newIndex != topClassIndex)
+        {
+            topClassIndex = ClassPrediction.indexOf(max);
+            topClassName = ClassName[topClassIndex];    
+            hasChanged = true;
+        }
+
+        if (hasChanged)
+        {
+            if (max < minCertainty)
+            {
+                onClassificationChangedHandler("",-1);
+            }
+            else{
+                onClassificationChangedHandler(topClassName, topClassPrediction);
+            }
         }
     }
 

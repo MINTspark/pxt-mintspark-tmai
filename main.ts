@@ -74,6 +74,7 @@ namespace ms_tmai {
         {
             ClassName.push(tempClassName);
             ClassPrediction.push(tempClassPrediction);
+            basic.showNumber(1)
         }
         else{
             firstUpdate = false;
@@ -81,8 +82,9 @@ namespace ms_tmai {
             if (index > -1) {
                 ClassPrediction[index] = tempClassPrediction;
             }
-            music.play(music.tonePlayable(Note.C, music.beat(BeatFraction.Eighth)), music.PlaybackMode.UntilDone)
+            basic.showNumber(2)
         }
+        basic.showNumber(3)
     })
 
     control.inBackground(() => {

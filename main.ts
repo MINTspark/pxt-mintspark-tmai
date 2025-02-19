@@ -6,21 +6,13 @@ namespace ms_tmai {
     let topClassIndex = -1;
     let topClassPrediction = -1;
     let minCertainty = 0;
-    let runClassification:boolean = false;
+    
 
     //% weight=100
-    //% block="Start Classification Min Score %certainty"
-    export function startClassification(certainty:number) : void {
-        minCertainty = certainty / 100;
-        serial.redirectToUSB()
-        runClassification = true;
-    }
-
-    //% weight=95
-    //% block="Stop Classification"
-    export function stopClassification(): void {
-        runClassification = false;
-        resetParameter;
+    //% block="Classification Min Score %certainty"
+    export function setClassificationThreshold(certainty:number) : void {
+        serial.redirectToUSB();
+        minCertainty = certainty;
     }
 
     let onClassificationChangedHandler: (predictionName: string, score: number) => void;
@@ -69,47 +61,28 @@ namespace ms_tmai {
     }
 
 
-    let serialReadInProgress = false;
     let firstUpdate = true;
 
-    serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {
-        
-        if (serialReadInProgress || !runClassification)
-        {
-            serial.readString();
-            return;
-        }
-
-        serialReadInProgress = true;
+    serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {    
         let rxData = serial.readUntil(serial.delimiters(Delimiters.NewLine))
-        let messageParts = rxData.split(";")
-        
-        for (let classificationString of messageParts)
-        {
-            let classificationParts = classificationString.split(":");
-            let tempClassName = classificationParts[0]
-            let tempClassPrediction = classificationParts[1]
+        let messageParts = rxData.split(":")
+        let numberOfClasses = parseFloat(messageParts[0]);
+        let tempClassName = messageParts[1];
+        let tempClassPrediction = parseFloat(messageParts[2]);
 
-            if (firstUpdate)
-            {
-                ClassName.push(tempClassName)
-                ClassPrediction.push(parseFloat(tempClassPrediction))
-            }
-            else
-            {
-                let index = ClassName.indexOf(tempClassName)
-                if (index == -1) {
-                    basic.showString(tempClassName);
-                    serialReadInProgress = false;
-                    return;
-                } else {
-                    ClassPrediction[index] = parseFloat(tempClassPrediction)
-                }
-            }
+        if (ClassName.length < numberOfClasses)
+        {
+            ClassName.push(tempClassName);
+            ClassPrediction.push(tempClassPrediction);
         }
-        
-        firstUpdate = false;
-        serialReadInProgress = false;
+        else{
+            firstUpdate = false;
+            let index = ClassName.indexOf(tempClassName)
+            if (index > -1) {
+                ClassPrediction[index] = tempClassPrediction;
+            }
+            music.play(music.tonePlayable(Note.C, music.beat(BeatFraction.Eighth)), music.PlaybackMode.UntilDone)
+        }
     })
 
     control.inBackground(() => {
@@ -117,7 +90,7 @@ namespace ms_tmai {
         let lastTopScore = 0;
 
         while (true) {
-            if (runClassification)
+            if (!firstUpdate)
             {
                 let hasChanged = false;
                 setTopClassification();

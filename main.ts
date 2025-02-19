@@ -1,4 +1,4 @@
-//% weight=100 color=#DC22E1 block="MINTspark TeachableMachine" blockId="MINTspark TeachableMachine" icon="\uf0e7"
+//% weight=100 color=#DC22E1 block="MINTspark Google TM" blockId="MINTspark TeachableMachine" icon="\uf0e7"
 namespace ms_tmai {
     let ClassName: string[] = []
     let ClassPrediction: number[] = []
@@ -8,43 +8,64 @@ namespace ms_tmai {
     let minCertainty = 0;
     let runClassification:boolean = false;
 
-    //% weight=60
-    //% block="Start Classification with Min Certainty %certainty"
+    //% weight=100
+    //% block="Start Classification Min Score %certainty"
     export function startClassification(certainty:number) : void {
         minCertainty = certainty / 100;
         serial.redirectToUSB()
         runClassification = true;
     }
 
-    //% weight=55
+    //% weight=95
     //% block="Stop Classification"
     export function stopClassification(): void {
         runClassification = false;
         resetParameter;
     }
 
-    let onClassificationChangedHandler: (PredictionName: string, Score: number) => void;
+    let onClassificationChangedHandler: (predictionName: string, score: number) => void;
 
-    //% weight=60
+    //% weight=50
     //% block="Classification Changed"
     //% draggableParameters = reporter
     //% color=#00B1ED
-    export function onClassificationChanged(handler: (PredictionName: string, Score: number) => void) {
+    //% blockGap=8
+    export function onClassificationChanged(handler: (Class: string, Score: number) => void) {
         onClassificationChangedHandler = handler;
     }
 
-    //% weight=70
-    //% block="ClassifiedName"
+    //% weight=80
+    //% block="Current Classification"
     //% color=#00B1ED
     export function getTopPredictioName():string {
         return topClassName;
     }
 
-    //% weight=68
-    //% block="ClassifiedScore"
+    //% weight=75
+    //% block="Current Score"
     //% color=#00B1ED
     export function getTopPredictioScore(): number {
         return topClassPrediction;
+    }
+
+    //% weight=70
+    //% block="Get score for class %name"
+    //% color=#00B1ED
+    export function getClassScore(name:string): number {
+        let index = ClassName.indexOf(name);
+        if (index > -1)
+        {
+            return ClassPrediction[index];
+        }
+
+        return NaN;
+    }
+
+    //% weight=65
+    //% block="All Class Names"
+    //% color=#00B1ED
+    export function getClassNames(): string[] {
+        return ClassName;
     }
 
 

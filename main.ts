@@ -66,26 +66,28 @@ namespace ms_tmai {
         let rxData = serial.readUntil(serial.delimiters(Delimiters.NewLine))
         let messageParts = rxData.split(":")
 
-        if (messageParts[0] == "label")
+        if (messageParts[0] == "reset")
         {
-            if (!firstUpdate)
-            {
-                firstUpdate = true;
-                ClassName = [];
-                ClassPrediction = [];
-            }
-
+            firstUpdate = true;
+            ClassName = [];
+            ClassPrediction = [];
+            topClassName = "";
+            topClassIndex = -1;
+            topClassPrediction = -1;
+        }
+        else if (messageParts[0] == "label")
+        {
             ClassName.push(messageParts[1]);
             ClassPrediction.push(0);
             return;
         }
+        else{
+            for (let i = 0; i < messageParts.length; i++) {
+                ClassPrediction[i] = parseFloat(messageParts[i]);
+            }
 
-        for (let i = 0; i < messageParts.length; i++)
-        {
-            ClassPrediction[i] = parseFloat(messageParts[i]);
+            firstUpdate = false;
         }
-
-        firstUpdate = false;
     })
 
     control.inBackground(() => {

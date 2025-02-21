@@ -1,5 +1,6 @@
 //% weight=100 color=#DC22E1 block="MINTspark Google TM" blockId="MINTspark TeachableMachine" icon="\uf0e7"
 namespace ms_tmai {
+
     let ClassName: string[] = []
     let ClassPrediction: number[] = []
     let topClassName = "";
@@ -7,11 +8,10 @@ namespace ms_tmai {
     let topClassPrediction = -1;
     let minCertainty = 0;
     
-
     //% weight=100
     //% block="Classification Min Score %certainty"
     export function setClassificationThreshold(certainty:number) : void {
-        serial.redirectToUSB();
+        
         minCertainty = certainty;
     }
 
@@ -60,15 +60,21 @@ namespace ms_tmai {
         return ClassName;
     }
 
-
     let firstUpdate = true;
-
+    serial.redirectToUSB();
     serial.onDataReceived(serial.delimiters(Delimiters.NewLine), function () {    
         let rxData = serial.readUntil(serial.delimiters(Delimiters.NewLine))
         let messageParts = rxData.split(":")
 
         if (messageParts[0] == "label")
         {
+            if (!firstUpdate)
+            {
+                firstUpdate = true;
+                ClassName = [];
+                ClassPrediction = [];
+            }
+
             ClassName.push(messageParts[1]);
             ClassPrediction.push(0);
             return;
